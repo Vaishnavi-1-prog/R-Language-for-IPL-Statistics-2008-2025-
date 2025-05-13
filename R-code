@@ -1,0 +1,42 @@
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Load the dataset
+ipl_data <- read.csv("/Users/vaishnavidevi/Downloads/matches.csv")
+
+# Top performers
+top_performers <- ipl_data %>%
+  count(player_of_match) %>%
+  arrange(desc(n)) %>%
+  rename(player = player_of_match, awards = n) %>%
+  head(10)
+
+# Print top performers for verification
+print(top_performers)
+
+# Win percentages
+win_percentages <- ipl_data %>%
+  filter(!is.na(winner)) %>%  # Exclude rows with NA winners
+  group_by(winner) %>%
+  summarise(total_wins = n()) %>%
+  mutate(win_percentage = (total_wins / sum(total_wins)) * 100) %>%
+  arrange(desc(win_percentage))
+
+# Plot 1: Pie chart for win percentages
+pie_chart <- ggplot(win_percentages, aes(x = "", y = win_percentage, fill = winner)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(title = "Win Percentages by Teams") +
+  theme_minimal()
+
+# Plot 2: Bar plot for most player awards
+bar_plot <- ggplot(top_performers, aes(x = reorder(player, -awards), y = awards, fill = player)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Top 10 Players with Most Player Awards", x = "Player", y = "Number of Awards") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Display both plots side by side
+grid.arrange(pie_chart, bar_plot, ncol = 2)
